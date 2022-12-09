@@ -12,7 +12,7 @@
   if (code != BF_OK) {         \
     BF_PrintError(code);    \
     return HP_ERROR;        \
-  }                         \
+  }                         \ 
 }
 
 int HP_CreateFile(char *fileName) {
