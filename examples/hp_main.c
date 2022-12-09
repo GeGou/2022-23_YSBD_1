@@ -21,7 +21,6 @@ int main() {
   BF_Init(LRU);
 
   HP_CreateFile(FILE_NAME);
-  printf("hi\n");
   HP_info* info = HP_OpenFile(FILE_NAME);
 
   Record record;

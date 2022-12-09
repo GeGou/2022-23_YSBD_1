@@ -11,6 +11,6 @@ ht:
 	gcc -I ./include/ -L ./lib/ -Wl,-rpath,./lib/ ./examples/ht_main.c ./src/record.c ./src/ht_table.c -lbf -o ./build/ht_main -O2
 
 
-# clean:
-#     rm ./build/sht_main data.db data2.db
+clean:
+	rm ./build/sht_main data.db data2.db
 

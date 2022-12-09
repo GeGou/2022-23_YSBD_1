@@ -7,7 +7,7 @@
 typedef struct {
     int fileDesc; // αναγνωριστικός αριθμός ανοίγματος αρχείου από το επίπεδο block 
     BF_Block *block;     // block στο οποίο είναι αποθηκευμένη η συγκεκριμενη δομη
-    int last_block_id;      // id του τελευταίου block του αρχείου σωρού
+    BF_Block *last_block;      // Το τελευταίο block του αρχείου σωρού
     int records;    // Αριθμός εγγραφών που χωράνε σε κάθε block του αρχείου σωρού
 } HP_info;
 
