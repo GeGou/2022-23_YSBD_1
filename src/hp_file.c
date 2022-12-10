@@ -19,46 +19,49 @@
 
 int HP_CreateFile(char *fileName) {
   HP_info *hp_info = malloc(sizeof(HP_info));
+  BF_Block* block;
+  void* data;
+
   BF_PrintError(BF_CreateFile(fileName));
   BF_PrintError(BF_OpenFile(fileName, &hp_info->fileDesc));
-  int blocks = 0;
+  
+  // Αρχικοποιώ και δεσμεύω το 1ο block στην μνήμη
+  BF_Block_Init(&block);
+  // Δεσμεύω νέο block στον δίσκο
+  BF_PrintError(BF_AllocateBlock(hp_info->fileDesc, block));
+  // Δείκτης που δειχνει στην αρχή των δεδομένων του block
+  data = BF_Block_GetData(block);
+  hp_info->block = block;
+  hp_info->last_block = block;
+  
+  // Βρισκω το πλήθος των εγγραφων που χωρανε σε καθε block του αρχείου
+  hp_info->records = (BF_BLOCK_SIZE - sizeof(HP_block_info)) / sizeof(Record);
+
   // Βρισκω το πλήθος των block του αρχείου
-  BF_PrintError(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
-  printf("%d\n", blocks);
-  // Βρισκω το πρώτο block του αρχείου
-  BF_PrintError(BF_GetBlock(hp_info->fileDesc, 0, hp_info->block));
-  // Βρισκω το τελευταίο block του αρχείου
-  BF_PrintError(BF_GetBlock(hp_info->fileDesc, blocks-1, hp_info->last_block));
+  // int blocks = 0;
+  // BF_PrintError(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
+  // printf("%d\n", blocks);
 
-
-  // memcpy(hp_info->block, &hp_info, sizeof(HP_info));  //Copying into memory
+  memcpy(data, &hp_info, sizeof(HP_info));  //Copying into memory
+  // Dirty και Unpin για να αποθηκευτεί στον δίσκο
+  BF_Block_SetDirty(block);
+  BF_PrintError(BF_UnpinBlock(block));
+  // Τερματίζω την επεξεργασια του αρχείου
   BF_PrintError(BF_CloseFile(hp_info->fileDesc));
+  BF_PrintError(BF_Close());
   return 0;
 }
 
 HP_info* HP_OpenFile(char *fileName){
+  
   // παιρνει απο το μπλοκ 0 το info και το επιστρεφει  
   return NULL ;
 }
 
-
-int HP_CloseFile( HP_info* hp_info ){
-  BF_ErrorCode error;
-  error=BF_CloseFile(hp_info->fileDesc);
-  if(error==0){   //BF_OK
-    //apodesmeush
-  }
-  else{
-    BF_PrintError(error);   //ektupwsh sfalmatos
-  }
-
-    if(error!=0){
-      return -1;  //apetuxe h close
-    }
-    else{
-      return 0;   //petuxe h close
-    }
-    free(hp_info);
+int HP_CloseFile(HP_info* hp_info){
+  BF_PrintError(BF_CloseFile(hp_info->fileDesc));
+  free(hp_info);
+  return 0;   //petuxe h close
 }
 
 int HP_InsertEntry(HP_info* hp_info, Record record){

@@ -12,7 +12,7 @@ typedef enum Record_Attribute {
 } Record_Attribute;
 
 typedef struct Record {
-    char record[15];
+  char record[15];
 	int id;
 	char name[15];
 	char surname[20];
