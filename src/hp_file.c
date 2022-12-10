@@ -42,7 +42,7 @@ int HP_CreateFile(char *fileName) {
   // BF_PrintError(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
   // printf("%d\n", blocks);
 
-  memcpy(data, &hp_info, sizeof(HP_info));  //Copying into memory
+  memcpy(data, &hp_info, sizeof(HP_info));
   // Dirty και Unpin για να αποθηκευτεί στον δίσκο
   BF_Block_SetDirty(block);
   BF_PrintError(BF_UnpinBlock(block));
@@ -53,12 +53,22 @@ int HP_CreateFile(char *fileName) {
 }
 
 HP_info* HP_OpenFile(char *fileName){
+  // Αρχικοποίση δομης προς επιστροφή
+  HP_info *info = malloc(sizeof(HP_info));
+
+  BF_PrintError(BF_OpenFile(fileName, &info->fileDesc));
+  BF_PrintError(BF_GetBlock(info->fileDesc, 0, info->block));
   
+  printf("HI\n");
+  return info;
   // παιρνει απο το μπλοκ 0 το info και το επιστρεφει  
-  return NULL ;
+  return NULL;
 }
 
 int HP_CloseFile(HP_info* hp_info){
+  // BF_Block_SetDirty(hp_info->block);
+  BF_PrintError(BF_UnpinBlock(hp_info->block));
+  BF_Block_Destroy(&hp_info->block);
   BF_PrintError(BF_CloseFile(hp_info->fileDesc));
   free(hp_info);
   return 0;   //petuxe h close
