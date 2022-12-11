@@ -58,7 +58,7 @@ int main() {
 
   for (int i = 0; i < blocks_num; ++i) {
     printf("Contents of Block %d\n\t",i);
-    CALL_OR_DIE(BF_GetBlock(fd1, i, block));
+    CALL_OR_DIE(BF_GetBlock(fd1, i, block)); 
     data = BF_Block_GetData(block);
     Record* rec= data;
     printRecord(rec[0]);
