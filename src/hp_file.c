@@ -32,6 +32,7 @@ int HP_CreateFile(char *fileName) {
   // Αρχικοποίηση μεταβλητών
   hp_info.block = block;
   hp_info.last_block_id = 0;
+  hp_info.is_heap = 1;
   // Βρισκω το πλήθος των εγγραφων που χωρανε σε καθε block του αρχείου
   hp_info.records = (BF_BLOCK_SIZE - sizeof(HP_block_info)) / sizeof(Record);
   // Αποθήκευση struct hp_info στο 1ο block 
@@ -61,7 +62,6 @@ int HP_CloseFile(HP_info* hp_info){
   // BF_PrintError(BF_UnpinBlock(hp_info->block));
   // BF_Block_Destroy(&hp_info->block);
   // BF_PrintError(BF_CloseFile(hp_info->fileDesc));
-  free(hp_info);
   return 0;
 }
 
@@ -96,6 +96,7 @@ int HP_InsertEntry(HP_info* hp_info, Record record){
       flag = 1;
     }
     BF_PrintError(BF_UnpinBlock(last_block));
+    BF_Block_Destroy(&last_block);
   }
   // Δέσμευση νέου block
   if (flag == 0) {
@@ -115,14 +116,46 @@ int HP_InsertEntry(HP_info* hp_info, Record record){
     memcpy(data, &record, sizeof(Record));
     BF_Block_SetDirty(last_block);
     BF_PrintError(BF_UnpinBlock(last_block));
+    BF_Block_Destroy(&last_block);
   }
   // ΙΣΩΣ ΝΑ ΜΕΝΕΙ ΑΚΟΜΑ ΚΑΠΟΙΟ PINNED BLOCK ΓΙΑΤΙ 
   // ΚΑΝΕΙ UNPIN ΜΟΝΟ ΤΟ ΤΕΛΕΥΤΑΙΟ BLOCK
   BF_Block_SetDirty(block);
-  // BF_PrintError(BF_UnpinBlock(block));
+  BF_PrintError(BF_UnpinBlock(block));
+  BF_Block_Destroy(&block);
   return hp_info->last_block_id;
 }
 
 int HP_GetAllEntries(HP_info* hp_info, int value){
-   return 0;
+  int blocks = 0, flag = 0;
+  int i = 1;   // Απο 1 διοτι δεν θα ελένξει το 1ο block με το βασικό struct
+  BF_Block *block;
+
+  BF_Block_Init(&block);
+  BF_PrintError(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
+  printf("\n>%d\n", hp_info->records);
+  //ΜΕΤΑ ΤΟ ΜΠΛΟΚ 101 Ή 101 ΣΚΑΕΙ , ΓΕΜΙΖΕΙ Ο BUFFER
+  // for (i = 1; i < blocks; i++) {
+  for (i = 1; i < 100; i++) {
+    // printf("\n--->%d\n", i);
+    BF_PrintError(BF_GetBlock(hp_info->fileDesc, i, block));
+    // Δείκτης στα δεδομένα του block και στο HP_block_info
+    void* data = BF_Block_GetData(block);
+    Record* rec = data;
+    HP_block_info *bl_info_ptr = data + hp_info->records * sizeof(Record);
+    // Ευρεση εγγραφών στο συγκεκριμενο block
+    int temp = bl_info_ptr->block_records;
+    // ΔΙΑΒΑΖΕΙ ΠΑΡΑΠΑΝΩ ΑΠΟ 6 ΕΓΓΡΑΦΕΣ ΠΟΥ ΧΩΡΑΕΙ ΤΟ BLOCK ΧΩΡΙΣ ΝΑ ΣΚΑΕΙ
+    for (int y = 0 ; y < temp ; y++) {
+      if (rec[y].id == value) {
+        printRecord(rec[y]);
+        flag = 1;
+      }
+    }
+    BF_PrintError(BF_UnpinBlock(block));
+    if (flag == 1) {break;}
+  }
+  BF_Block_Destroy(&block); 
+  printf("--->%d\n", i);
+  return i;
 }
