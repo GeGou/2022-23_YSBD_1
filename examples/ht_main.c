@@ -34,6 +34,8 @@ int main() {
 
   printf("RUN PrintAllEntries\n");
   int id = rand() % RECORDS_NUM;
+  // Την παρακάτω εντολή δεν την είχε
+  printf("\nSearching for: %d",id);
   HT_GetAllEntries(info, &id);
 
   HT_CloseFile(info);
