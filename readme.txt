@@ -12,4 +12,4 @@ make ht;
 make hp;
 
 Έλενχος για leaks
-valgrind --leak-check=full --show-leak-kinds=all --trace-children=yes ./build/bf_main
+valgrind -s --leak-check=full --show-leak-kinds=all --trace-children=yes --track-origins=yes ./build/hp_main
