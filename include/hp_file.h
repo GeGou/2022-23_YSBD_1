@@ -7,7 +7,6 @@
 typedef struct {
     int fileDesc; // αναγνωριστικός αριθμός ανοίγματος αρχείου από το επίπεδο block 
     BF_Block *block;     // block στο οποίο είναι αποθηκευμένη η συγκεκριμενη δομη
-    // BF_Block *last_block;      // Το τελευταίο block του αρχείου σωρού
     int last_block_id;      // Το id του τελευταίου block του αρχείου σωρού
     int records;    // Αριθμός εγγραφών που χωράνε σε κάθε block του αρχείου σωρού
     int is_heap;    // 1 αν ειναι αρχείο σωρου και 0 αν δεν είναι
@@ -17,7 +16,6 @@ typedef struct {
 // Η δομή HP_block_info κρατάει μεταδεδομένα του block ενός αρχείου σωρού
 typedef struct {
     int block_records;    // αριθμός των εγγραφών στο συγκεκριμένο block
-    BF_Block *next_block;   // δείκτης στο επόμενο block δεδομένων
 } HP_block_info;
 
 /*Η συνάρτηση HP_CreateFile χρησιμοποιείται για τη δημιουργία και

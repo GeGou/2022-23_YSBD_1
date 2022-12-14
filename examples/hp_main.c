@@ -19,6 +19,7 @@
 
 int main() {
   BF_Init(LRU);
+  // BF_Init(MRU);
 
   HP_CreateFile(FILE_NAME);
   HP_info* info = HP_OpenFile(FILE_NAME);

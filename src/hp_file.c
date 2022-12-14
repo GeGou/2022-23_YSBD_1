@@ -38,6 +38,9 @@ int HP_CreateFile(char *fileName) {
   // Αποθήκευση struct hp_info στο 1ο block 
   memcpy(data, &hp_info, sizeof(HP_info));
   // Dirty και Unpin για να αποθηκευτεί στον δίσκο
+  
+  printf("HEHEHE   %s\n", data);
+  
   BF_Block_SetDirty(block);
   CALL_BF(BF_UnpinBlock(block));
   // Τέλος δημιουργίας του αρχείου
@@ -125,11 +128,6 @@ int HP_InsertEntry(HP_info* hp_info, Record record){
     hp_info->last_block_id++;
     // Αρχικοποίηση μεταβλητων του struct HP_block_info
     bl_info.block_records = 1;
-
-    //////////////////////////////////////////////
-    bl_info.next_block = NULL;  // ΘΕΛΕΙ ΚΟΙΤΑΓΜΑ!
-    //////////////////////////////////////////////
-
     // Δείκτης στα δεδομενα του τελευταίου block
     data = BF_Block_GetData(last_block);
     // Αποθήκευση δομης HP_block_info στο τελος του block
@@ -156,7 +154,6 @@ int HP_GetAllEntries(HP_info* hp_info, int value){
   BF_Block_Init(&block);
   CALL_BF(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
   //ΜΕΤΑ ΤΟ ΜΠΛΟΚ 101 Ή 101 ΣΚΑΕΙ , ΓΕΜΙΖΕΙ Ο BUFFER
-  // for (i = 1; i < blocks; i++) {
   for (i = 1; i < blocks; i++) {
     // printf("\n--->%d\n", i);
     CALL_BF(BF_GetBlock(hp_info->fileDesc, i, block));
