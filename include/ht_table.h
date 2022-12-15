@@ -16,10 +16,10 @@ typedef struct {
 
 // Η δομή HT_block_info κρατάει μεταδεδομένα του block ενός αρχείου κατακερματισμού
 typedef struct {
-    int block_id;
+    int block_id;       // Αρχιζει απο 1 και αυξάνεται κατα 1 για καθε bucket
     int block_records;    // αριθμός των εγγραφών στο συγκεκριμένο block
     BF_Block *overflow_block;   // δείκτης στο μπλοκ υπερχείλισης
-    int prev_bl_id;
+    int prev_bl_id;     // 
 } HT_block_info;
 
 /*Η συνάρτηση HT_CreateFile χρησιμοποιείται για τη δημιουργία

@@ -70,94 +70,66 @@ int HT_CloseFile(HT_info* HT_info) {
 }
 
 int HT_InsertEntry(HT_info* ht_info, Record record){
-  BF_Block *block, *last_block;
-  HT_block_info bl_info;
-  HT_block_info *bl_info_ptr;
+  BF_Block *block_0, *block;
+  HT_block_info bl_info, *bl_info_ptr;
   void *data;
   int flag = 0;   // flag για μη εγγραφή
 
   // Φέρνω στην ενδιάμεση μνήμη το 1ο block
-  BF_Block_Init(&block);
-  CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, 0, block));
-  // Βρισκω το bucket στο οποιο θα "μπει" η εγγραφή record
-  int bucket = record.id % ht_info->numBuckets;
+  BF_Block_Init(&block_0);
+  CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, 0, block_0));
   // printf("%d mod %ld = %d\n", record.id, ht_info->numBuckets, bucket);
-  
-  // Βρισκω ποιο block αντιστοιχεί στο bucket, που βρήκα πιο πάνω, απο τον 
+
+  // Δημιουργώ blocks για καθε bucket
+  // Αυτο θα τρεχει μια φορα και θα δημιουργει blocks για ολα τα buckets
+  int blocks_num;
+  BF_GetBlockCounter(ht_info->fileDesc, &blocks_num);
+  if (blocks_num == 1) {
+    BF_Block *new_block;
+    for (int i = 0 ; i < ht_info->numBuckets ; i++) {
+      BF_Block_Init(&new_block);
+      CALL_OR_DIE(BF_AllocateBlock(ht_info->fileDesc, &new_block));
+      // Φτιαχνω το HT_block_info
+      bl_info.block_id = i+1;  // διοτι το block 0 ειναι το βασικό block
+      bl_info.block_records = 0;
+      bl_info.overflow_block = NULL;
+      bl_info.prev_bl_id = 0;  
+      // Αντιγράφουμε το struct στο τέλος του νέου block
+      void *data = BF_Block_GetData(new_block);
+      bl_info_ptr = data + ht_info->records * sizeof(Record);
+      memcpy(bl_info_ptr, &bl_info, sizeof(HT_block_info));
+      BF_Block_SetDirty(new_block);
+      CALL_OR_DIE(BF_UnpinBlock(new_block));
+      BF_Block_Destroy(&new_block);
+    }
+  }
+  // Βρισκω το bucket στο οποιο θα "μπει" η εγγραφή record απο την Hash Function
+  int bucket = record.id % ht_info->numBuckets;
+  // Βρισκω ποιο block αντιστοιχεί στο bucket, που βρήκα απο πάνω, απο τον 
   // πινακα κατακερματισμού οπου κρατάει στοιχεία αντιστοίχισης bucket - block
-  int bl = ht_info->ht_array[bucket];
+  int block_num = ht_info->ht_array[bucket];
+  // Αποθήκευση εγγραφής στο block
+  BF_Block_Init(&block);
+  void *data = BF_GetBlock(ht_info->fileDesc, block_num, block);
+  bl_info_ptr = data + ht_info->records * sizeof(Record);
+  int records = bl_info_ptr->block_records;
+  // Ελενχος για κενό χωρο οπου θα μπει εγγραφή
+  if (records < ht_info->records) {
+    memcpy(data+records*sizeof(Record), &record, sizeof(Record));
+  }
+  // Δημιουργία block υπερχείλησης
+  else {
+      
+  }
+  BF_Block_SetDirty(block);
+  CALL_OR_DIE(BF_UnpinBlock(block));
+  BF_Block_Destroy(&block);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // // Ελενχος για το αν υπαρχει block για εγγραφές, δηλαδή παραπάνω απο ένα block
-  // if (ht_info->last_block_id != 0) {
-  //   // Φέρνω το τελευταιο block στην ενδιάμεση μνήμη
-  //   BF_Block_Init(&last_block);
-  //   CALL_OR_DIE(BF_GetBlock(hp_info->fileDesc, hp_info->last_block_id, last_block));
-  //   // Δείκτης στα δεδομένα του τελευταίου block
-  //   data = BF_Block_GetData(last_block);
-  //   // Δείκτης στο τέλος του block όπου βρισκεται το struct HP_block_info
-  //   bl_info_ptr = data + ht_info->records * sizeof(Record);
-  //   // Εύρεση πλήθους εγγραφων στο block
-  //   int records = bl_info_ptr->block_records;
-  //   // Ελενχος για κενό χωρο οπου θα μπει εγγραφή
-  //   if (records < hp_info->records) {
-  //     memcpy(data+records*sizeof(Record), &record, sizeof(Record));
-  //     bl_info_ptr->block_records++;
-  //     BF_Block_SetDirty(last_block);
-  //     flag = 1;
-  //   }
-  //   CALL_OR_DIE(BF_UnpinBlock(last_block));
-  //   BF_Block_Destroy(&last_block);
-  // }
-  // // Δέσμευση νέου block
-  // if (flag == 0) {
-  //   BF_Block_Init(&last_block);
-  //   CALL_OR_DIE(BF_AllocateBlock(hp_info->fileDesc, last_block));
-  //   // Ενημερωση σχετικα με το πλεον τελευταιό block
-  //   ht_info->last_block_id++;
-  //   // Αρχικοποίηση μεταβλητων του struct HP_block_info
-  //   bl_info.block_records = 1;
-  //   // Δείκτης στα δεδομενα του τελευταίου block
-  //   data = BF_Block_GetData(last_block);
-  //   // Αποθήκευση δομης HP_block_info στο τελος του block
-  //   bl_info_ptr = data + ht_info->records * sizeof(Record);
-  //   memcpy(bl_info_ptr, &bl_info, sizeof(HP_block_info));
-  //   // Αποθήκευση εγγραφής στο block
-  //   memcpy(data, &record, sizeof(Record));
-  //   BF_Block_SetDirty(last_block);
-  //   CALL_OR_DIE(BF_UnpinBlock(last_block));
-  //   BF_Block_Destroy(&last_block);
-  // }
-
-  // BF_Block_SetDirty(block);
-  // CALL_BF(BF_UnpinBlock(block));
-  // BF_Block_Destroy(&block);
-  // return hp_info->last_block_id;
-  return 0;
+  // Τέλος επεξεργασίας 
+  BF_Block_SetDirty(block_0);
+  CALL_OR_DIE(BF_UnpinBlock(block_0));
+  BF_Block_Destroy(&block_0);
+  return block_num;
 }
 
 int HT_GetAllEntries(HT_info* ht_info, int value){

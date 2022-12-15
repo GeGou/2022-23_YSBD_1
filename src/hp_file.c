@@ -13,7 +13,7 @@
   BF_ErrorCode code = call; \
   if (code != BF_OK) {      \
     BF_PrintError(code);    \
-    return -1;              \
+    return -1;             \
   }                         \
 }
 
@@ -38,9 +38,6 @@ int HP_CreateFile(char *fileName) {
   // Αποθήκευση struct hp_info στο 1ο block 
   memcpy(data, &hp_info, sizeof(HP_info));
   // Dirty και Unpin για να αποθηκευτεί στον δίσκο
-  
-  printf("HEHEHE   %s\n", data);
-  
   BF_Block_SetDirty(block);
   CALL_BF(BF_UnpinBlock(block));
   // Τέλος δημιουργίας του αρχείου
