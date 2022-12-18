@@ -10,15 +10,16 @@ typedef struct {
     int fileDesc; // αναγνωριστικός αριθμός ανοίγματος αρχείου από το επίπεδο block 
     long int numBuckets; // το πλήθος των “κάδων” του αρχείου κατακερματισμού
     BF_Block *block;    //block στο οποίο είναι αποθηκευμένη η δομή
-    int **ht_array;   //ο πίνακας κατακερματισμού
+    int *ht_array;   //ο πίνακας κατακερματισμού
     int records;    // Αριθμός εγγραφών που χωράνε σε κάθε block του αρχείου κατακερματισμού
     int is_ht;     // 1 αν ειναι αρχείο κατακερματισμου και 0 αν δεν είναι
 } HT_info;
 
 // Η δομή HT_block_info κρατάει μεταδεδομένα του block ενός αρχείου κατακερματισμού
 typedef struct {
-    int block_id;       // Αρχιζει απο 1
+    int block_id;       // Αρχιζει απο 1, αυξάνεται κατα 1 για κάθε νεο block
     int block_records;    // αριθμός των εγγραφών στο συγκεκριμένο block
+    int overflow_block_id;    // id του block υπερχείλισης 
     BF_Block *overflow_block;   // δείκτης στο μπλοκ υπερχείλισης
 } HT_block_info;
 
