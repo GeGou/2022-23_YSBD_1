@@ -70,6 +70,7 @@ HT_info* HT_OpenFile(char *fileName) {
 
 
 int HT_CloseFile(HT_info* HT_info) {
+  free(HT_info);
   CALL_OR_DIE(BF_CloseFile(HT_info->fileDesc));
   return 0;
 }
@@ -160,67 +161,45 @@ int HT_InsertEntry(HT_info* ht_info, Record record) {
 
 
 int HT_GetAllEntries(HT_info* ht_info, int value) {
-  do {
-    BF_Block_Init(&block);
-    CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, block_num, block));  //δείκτη στο block του κουβά
-    data = BF_Block_GetData(block);
-    bl_info_ptr_1 = data + ht_info->records * sizeof(Record);
-    bl_id = bl_info_ptr_1->overflow_block_id;
-    // Βρέθηκε επόμενο block οπότε αποδεσμεύω το προηγούμενο
-    if (bl_id != -1) {
-      block_num = bl_id;
+  HT_block_info *bl_info_ptr;
+  BF_Block *block;
+  int block_id, flag = 0, bl_counter = 0;
+
+  //Βρισκω το bucket που περιεχει την εγγραφη με id ισο με value με χρήση της hash function
+  int bucket = value % ht_info->numBuckets;
+  // Βρισκω ποιο block αντιστοιχεί στο bucket
+  int block_num = ht_info->ht_array[bucket];
+  if (block_num != 0) {   // περίπτωση που δεν υπαρχει καμία εγγραφη στο συγκεκριμενο bucket
+    do {
+      bl_counter++;   // μετρητής των block που ελεγθηκαν και ζητείται να επιστραφεί
+      BF_Block_Init(&block);
+      CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, block_num, block));  //δείκτη στο block του κουβά
+      void *data = BF_Block_GetData(block);
+      Record* rec = data;
+      bl_info_ptr = data + ht_info->records * sizeof(Record);
+      //Ευρεση ζητούμενης εγγραφής στο συγκεκριμενο block
+      int records = bl_info_ptr->block_records;
+      for (int y = 0 ; y < records ; y++) {
+        if (rec[y].id == value) {
+          printRecord(rec[y]);
+          flag = 1;   // σε περιπτωση που βρηκε την εγγραφη ,τερματίζει την αναζήτηση
+          break;
+        }
+      }
       CALL_OR_DIE(BF_UnpinBlock(block));
-      BF_Block_Destroy(&block);
-    }
-  } while (bl_id != -1);
-
-
-return 0;
-
-
-
-
-  // HT_block_info bl_info;
-
-  // // Βρισκω το bucket που περιεχει την εγγραφη με id ισο με value με χρήση της hash function
-  // BF_Block *block, *next_block;
-  // HT_block_info *bl_info_ptr;
-  // int bucket = value % ht_info->numBuckets;
-  // int block_num = ht_info->ht_array[bucket][0]; 
-  // // Έλενχος για το αν εχει εγγραφές το συγκεκριμένο bucket
-  // if (ht_info->ht_array[bucket][1] == 0) {
-  //   return -1;
-  // }
-  // // Δεικτη στο 1ο block του κουβα
-  // BF_Block_Init(&block);
-  // CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, block_num, block));  
-  // void *data = BF_Block_GetData(block);
-  // int flag = 0;   // flag για εύρεση εγγραφή(1) ή μη εύρεση(0)
-  // int flag_0 = 0;   // Αν το 1ο block του κουβα εχει block υπερχείλισης , 0 αν δεν έχει, 1 αν εχει
-  // // Εξωτερική επανάληψη για κάθε block του κουβά
-  // do {
-  //   if (flag_0 == 1) {
-  //     next_block = bl_info_ptr->overflow_block;
-  //     CALL_OR_DIE(BF_UnpinBlock(block));
-  //     void *data = BF_Block_GetData(next_block);
-  //   }
-  //   flag_0 = 1;
-  //   Record* rec = data;
-  //   bl_info_ptr = data + ht_info->records * sizeof(Record);
-  //   // Ευρεση ζητούμενης εγγραφής στο συγκεκριμενο block
-  //   int records = bl_info_ptr->block_records;
-  //   for (int y = 0 ; y < records ; y++) {
-  //     // printf("%d\n", y);
-  //     if (rec[y].id == value) {
-  //       printRecord(rec[y]);
-  //       flag = 1;
-  //       break;
-  //     }
-  //   }
-  //   // CALL_OR_DIE(BF_UnpinBlock(block));
-  //   if (flag == 1) {break;}
-  // } while (bl_info_ptr->overflow_block != NULL);
-
-  // BF_Block_Destroy(&block);
-  // return bl_info_ptr->block_id;
+      if (flag == 1) {break;}
+      // Ψαχνω στο επόμενο block του κουβα για την εγγραφη
+      block_id = bl_info_ptr->overflow_block_id;
+      if (block_id != -1) {
+        block_num = block_id;
+        CALL_OR_DIE(BF_UnpinBlock(block));
+        BF_Block_Destroy(&block);
+      }
+    } while (block_id != -1);
+  }
+  BF_Block_Destroy(&block); 
+  if (flag == 0) {
+    return -1;
+  }
+  return bl_counter;
 }
