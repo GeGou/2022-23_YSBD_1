@@ -6,14 +6,12 @@
 #include "hp_file.h"
 #include "record.h"
 
-#define RECORDS_NUM
-
 #define CALL_BF(call)       \
 {                           \
   BF_ErrorCode code = call; \
   if (code != BF_OK) {      \
     BF_PrintError(code);    \
-    return -1;             \
+    exit(code);             \
   }                         \
 }
 
@@ -49,38 +47,25 @@ int HP_CreateFile(char *fileName) {
 HP_info* HP_OpenFile(char *fileName){
   int fileDesc;
   BF_Block* block;
-  HP_info* info;
-  BF_ErrorCode code;
+  HP_info* info = malloc(sizeof(HP_info));
   
   // Βρίσκω και επιστρέφω το περιεχόμενο του 1ου block (block 0)
   BF_Block_Init(&block);
-  code = BF_OpenFile(fileName, &fileDesc);
-  if (code != BF_OK) {
-    BF_PrintError(code);
-    return NULL;
-  } 
-  code = BF_GetBlock(fileDesc, 0, block);
-  if (code != BF_OK) {
-    BF_PrintError(code);
-    return NULL;
-  } 
-  info = (HP_info *)BF_Block_GetData(block);
+  CALL_BF(BF_OpenFile(fileName, &fileDesc));
+  CALL_BF(BF_GetBlock(fileDesc, 0, block)); 
+  info = (HP_info*)BF_Block_GetData(block);
   if (info->is_heap == 0) {
     return NULL;
   }
-  code = BF_UnpinBlock(block);
-  if (code != BF_OK) {
-    BF_PrintError(code);
-    return NULL;
-  } 
+  BF_Block_SetDirty(block);
+  CALL_BF(BF_UnpinBlock(block)); 
   BF_Block_Destroy(&block);
   return info;
 }
 
 int HP_CloseFile(HP_info* hp_info){
-  // CALL_BF(BF_UnpinBlock(hp_info->block));
-  // BF_Block_Destroy(&hp_info->block);
   CALL_BF(BF_CloseFile(hp_info->fileDesc));
+  // free(hp_info);   //<-----
   return 0;
 }
 
@@ -150,7 +135,7 @@ int HP_GetAllEntries(HP_info* hp_info, int value){
 
   BF_Block_Init(&block);
   CALL_BF(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
-  //ΜΕΤΑ ΤΟ ΜΠΛΟΚ 101 Ή 101 ΣΚΑΕΙ , ΓΕΜΙΖΕΙ Ο BUFFER
+  //ΜΕΤΑ ΤΟ ΜΠΛΟΚ 101 ΣΚΑΕΙ , ΓΕΜΙΖΕΙ Ο BUFFER
   for (i = 1; i < blocks; i++) {
     // printf("\n--->%d\n", i);
     CALL_BF(BF_GetBlock(hp_info->fileDesc, i, block));
