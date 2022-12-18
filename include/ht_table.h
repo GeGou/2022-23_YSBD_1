@@ -20,7 +20,6 @@ typedef struct {
     int block_id;       // Αρχιζει απο 1, αυξάνεται κατα 1 για κάθε νεο block
     int block_records;    // αριθμός των εγγραφών στο συγκεκριμένο block
     int overflow_block_id;    // id του block υπερχείλισης 
-    BF_Block *overflow_block;   // δείκτης στο μπλοκ υπερχείλισης
 } HT_block_info;
 
 /*Η συνάρτηση HT_CreateFile χρησιμοποιείται για τη δημιουργία
