@@ -37,6 +37,8 @@ int main() {
   printf("\nSearching for: %d",id);
   HT_GetAllEntries(info, id);
 
+  HashStatistics(FILE_NAME);
+
   HT_CloseFile(info);
   BF_Close();
 }

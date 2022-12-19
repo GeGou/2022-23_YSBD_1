@@ -57,12 +57,13 @@ HT_info* HT_OpenFile(char *fileName) {
   // Βρίσκω και επιστρέφω το περιεχόμενο του 1ου block (block 0)
   BF_Block_Init(&block);
   CALL_OR_DIE(BF_OpenFile(fileName, &fileDesc));
-  CALL_OR_DIE(BF_GetBlock(fileDesc, 0, block)); 
-  info = (HT_info *)BF_Block_GetData(block);
+  CALL_OR_DIE(BF_GetBlock(fileDesc, 0, block));
+  char* data = BF_Block_GetData(block); 
+  memcpy(data, &fileDesc, sizeof(int));
+  memcpy(info, data, sizeof(HT_info));
   if (info->is_ht == 0) {
     return NULL;
   }
-  BF_Block_SetDirty(block);
   CALL_OR_DIE(BF_UnpinBlock(block)); 
   BF_Block_Destroy(&block);
   return info;
@@ -70,8 +71,9 @@ HT_info* HT_OpenFile(char *fileName) {
 
 
 int HT_CloseFile(HT_info* HT_info) {
-  free(HT_info);
   CALL_OR_DIE(BF_CloseFile(HT_info->fileDesc));
+  free(HT_info->ht_array);
+  free(HT_info);
   return 0;
 }
 
@@ -202,4 +204,77 @@ int HT_GetAllEntries(HT_info* ht_info, int value) {
     return -1;
   }
   return bl_counter;
+}
+
+int HashStatistics(char* filename) {
+  int fileDesc;
+  int overflowed_buckets = 0;
+  BF_Block *block, *block_0;
+  HT_block_info *bl_info_ptr;
+  HT_info *ht_info;
+
+  
+  // Παίρνω δείκτη στα δεδομένα του 1ο block (block 0)
+  BF_Block_Init(&block);
+  CALL_OR_DIE(BF_OpenFile(filename, &fileDesc));
+  CALL_OR_DIE(BF_GetBlock(fileDesc, 0, block)); 
+  void* data = BF_Block_GetData(block);
+  ht_info = data;
+  // 1o ζητούμενο
+  int max_file_blocks;
+  CALL_OR_DIE(BF_GetBlockCounter(ht_info->fileDesc, &max_file_blocks));
+  printf("File blocks : %d\n", max_file_blocks);
+
+  for (int i = 0 ; i < ht_info->numBuckets ; i++) {
+    // Βρισκω για κάθε bucket ποιο ειναι το 1ο block που αρχιζει να βαζει εγγραφές 
+    int block_num = ht_info->ht_array[i];
+    int overflow_bl_id = 0;
+    int min_rec = 0, avg_rec = 0, max_rec = 0;
+    // Έλενχος για το αν εχει δημιουργηθει block για τον συγκεκριμένο κουβά
+    if (block_num != 0) {
+      do {
+        BF_Block_Init(&block_0);
+        CALL_OR_DIE(BF_GetBlock(ht_info->fileDesc, block_num, block_0));  //δείκτη στο block του κουβά
+        void* data_0 = BF_Block_GetData(block_0);
+        bl_info_ptr = data_0 + ht_info->records * sizeof(Record);
+        // Υλοποίηση 2ου ζητούμενoυ
+        if (bl_info_ptr->block_records < min_rec) {
+          min_rec = bl_info_ptr->block_records;
+        }
+        if (bl_info_ptr->block_records > max_rec) {
+          max_rec = bl_info_ptr->block_records;
+        }     
+        if (bl_info_ptr->block_records < min_rec) {
+          min_rec = bl_info_ptr->block_records;
+        }
+        // Έλενχος για το αν υπάρχει block υπερχείλισης
+        overflow_bl_id = bl_info_ptr->overflow_block_id;
+        if (overflow_bl_id != -1) {
+          block_num = overflow_bl_id;
+          CALL_OR_DIE(BF_UnpinBlock(block_0));
+          BF_Block_Destroy(&block_0);
+        }
+      } while (overflow_bl_id != -1);
+      CALL_OR_DIE(BF_UnpinBlock(block_0)); 
+      BF_Block_Destroy(&block_0);
+    }
+      // 2o ζητούμενο
+    printf("Bucket: %d ->Minimum records %d  ->Average records: %d ->Maximum records: \n", min_rec, avg_rec, max_rec);
+    // printf("Minimum records per bucket : %d\n", min_rec);
+    // printf("Average records per bucket : %d\n", avg_rec);
+    // printf("Maximum records per bucket : %d\n", max_rec);
+  }
+
+  // 3o ζητούμενο
+  // Δεν υπολογίζουμε το block 0
+  int avg_bucket_blocks = (max_file_blocks - 1)/ ht_info->numBuckets;
+  printf("Average block per bucket : %d\n", avg_bucket_blocks);
+  // 4o ζητούμενο
+  printf("Amount of buckets with overflow blocks : %d\n", overflowed_buckets);
+  // printf("Bucket : %d has %d overflow blocks\n", overflowed_buckets);
+
+  CALL_OR_DIE(BF_UnpinBlock(block)); 
+  BF_Block_Destroy(&block);
+
+  return 0;
 }
