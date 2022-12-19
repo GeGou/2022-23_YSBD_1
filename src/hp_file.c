@@ -53,11 +53,12 @@ HP_info* HP_OpenFile(char *fileName){
   BF_Block_Init(&block);
   CALL_BF(BF_OpenFile(fileName, &fileDesc));
   CALL_BF(BF_GetBlock(fileDesc, 0, block)); 
-  info = (HP_info*)BF_Block_GetData(block);
+  char* data = BF_Block_GetData(block);
+  memcpy(data, &fileDesc, sizeof(int));
+  memcpy(info, data, sizeof(HP_info));
   if (info->is_heap == 0) {
     return NULL;
   }
-  BF_Block_SetDirty(block);
   CALL_BF(BF_UnpinBlock(block)); 
   BF_Block_Destroy(&block);
   return info;
@@ -65,7 +66,7 @@ HP_info* HP_OpenFile(char *fileName){
 
 int HP_CloseFile(HP_info* hp_info){
   CALL_BF(BF_CloseFile(hp_info->fileDesc));
-  // free(hp_info);   //<-----
+  free(hp_info);
   return 0;
 }
 
