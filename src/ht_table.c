@@ -224,13 +224,13 @@ int HashStatistics(char* filename) {
   CALL_OR_DIE(BF_GetBlockCounter(ht_info->fileDesc, &max_file_blocks));
   printf("File blocks : %d\n", max_file_blocks);
   
-  int overflowed_buckets = 0;
+  int overflowed_buckets = 0, min_rec = 0, avg_rec, max_rec = 0, file_rec_sum = 0;
   for (int i = 0 ; i < ht_info->numBuckets ; i++) {
     // Βρισκω για κάθε bucket ποιο ειναι το 1ο block που αρχιζει να βαζει εγγραφές 
     int block_num = ht_info->ht_array[i];
-    int overflow_bl_id, min_rec, avg_rec, max_rec;
+    int overflow_bl_id;
     int flag = 0, flag_0 = 0, bl_per_bucket = 0;
-    int overflow_blocks = 0, over;
+    int overflow_blocks = 0, rec_sum = 0;
     // Έλενχος για το αν εχει δημιουργηθει block για τον συγκεκριμένο κουβά
     if (block_num != 0) {
       do {
@@ -245,15 +245,10 @@ int HashStatistics(char* filename) {
           max_rec = bl_info_ptr->block_records;
           flag = 1;
         }
-        // Υλοποίηση 2ου ζητούμενoυ
-        if (bl_info_ptr->block_records < min_rec) {
-          min_rec = bl_info_ptr->block_records;
-        }
-        if (bl_info_ptr->block_records > max_rec) {
-          max_rec = bl_info_ptr->block_records;
-        }     
         // Έλενχος για το αν υπάρχει block υπερχείλισης
         overflow_bl_id = bl_info_ptr->overflow_block_id;
+        // Άθροιση των εγγραφών καθε κουβά για το 2ο ζητούμενο
+        rec_sum += bl_info_ptr->block_records;
         if (overflow_bl_id != -1) {
           if (flag_0 == 0) {
             overflowed_buckets++;   // αυξάνεται όταν ο κουβάς εχει block υπερχείλισης
@@ -266,17 +261,23 @@ int HashStatistics(char* filename) {
       } while (overflow_bl_id != -1);
       CALL_OR_DIE(BF_UnpinBlock(block_0)); 
       BF_Block_Destroy(&block_0);
+      
+      // Υλοποίηση 2ου ζητούμενoυ
+      if (rec_sum < min_rec) {
+        min_rec = rec_sum;
+      }
+      if (rec_sum > max_rec) {
+        max_rec = rec_sum;
+      }
+      file_rec_sum += rec_sum;    
     }
-    // 2o ζητούμενο
-    // printf("Bucket: %d -> Min records: %d  -> Avg records: %d -> Max records: %d\n", i, min_rec, avg_rec, max_rec);
-    // printf("Minimum records per bucket : %d\n", min_rec);
-    // printf("Average records per bucket : %d\n", avg_rec);
-    // printf("Maximum records per bucket : %d\n", max_rec);
-
     // 4o ζητούμενο
     printf("Bucket: %d has %d overflow blocks.\n", i, bl_per_bucket - 1);
   }
 
+  // 2o ζητούμενο
+  avg_rec = file_rec_sum / ht_info->numBuckets;
+  printf("Min records: %d  -> Avg records: %d -> Max records: %d\n", min_rec, avg_rec, max_rec);
   // 3o ζητούμενο
   // Δεν υπολογίζουμε το block 0
   int avg_bucket_blocks = (max_file_blocks - 1)/ ht_info->numBuckets;
