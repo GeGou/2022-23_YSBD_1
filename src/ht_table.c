@@ -34,7 +34,7 @@ int HT_CreateFile(char *fileName, int buckets) {
   ht_info.ht_array = malloc(buckets*sizeof(int));
   // Αρχικοποίηση πίνακα κατακερματισμού
   for (int i = 0 ; i < buckets ; i++) {
-    ht_info.ht_array[i] = 0;   // Αντιστοίχιση κουβά και block , π.χ κουβας 0 block 1
+    ht_info.ht_array[i] = 0;   // Αρχικά για κανεναν κουβα δεν εχει δημιουργηθεί block
   }
   // Βρισκω το πλήθος των εγγραφων που χωρανε σε καθε block του αρχείου
   ht_info.records = (BF_BLOCK_SIZE - sizeof(HT_block_info)) / sizeof(Record);
@@ -89,14 +89,12 @@ int HT_InsertEntry(HT_info* ht_info, Record record) {
   int block_num = ht_info->ht_array[bucket];
   // Ελενχος για το αν εχει υπαρχει allacated block για τον κουβα, αν δεν υπάρχει το δημιουργώ
   if (block_num == 0) {
-    // printf("here %d\n", block_num);
     BF_Block *new_block;
     BF_Block_Init(&new_block);
     CALL_OR_DIE(BF_AllocateBlock(ht_info->fileDesc, new_block));
     // Φτιαχνω το HT_block_info
     int temp = 0;
     CALL_OR_DIE(BF_GetBlockCounter(ht_info->fileDesc, &temp));
-    // printf("HERE -> %d\n", temp);
     ht_info->ht_array[bucket] = temp - 1;   // αποθήκευση αριθμού 1ου block με τις εγγραφές του κουβα
     bl_info.block_id = temp - 1;    // το νέο κατα σειρά δημιουργημένο block
     bl_info.block_records = 0;
@@ -109,7 +107,7 @@ int HT_InsertEntry(HT_info* ht_info, Record record) {
     CALL_OR_DIE(BF_UnpinBlock(new_block));
     BF_Block_Destroy(&new_block);
   }
-  int bl_id = 0;    // Αυτο θα επιστραφεί
+  int bl_id = 0;
   block_num = ht_info->ht_array[bucket];
   // Εύρεση του τελευταίου block με εγγραφές του κουβα προς τοποθέτηση της νέας εγγραφης
   do {
@@ -171,7 +169,8 @@ int HT_GetAllEntries(HT_info* ht_info, int value) {
   int bucket = value % ht_info->numBuckets;
   // Βρισκω ποιο block αντιστοιχεί στο bucket
   int block_num = ht_info->ht_array[bucket];
-  if (block_num != 0) {   // περίπτωση που δεν υπαρχει καμία εγγραφη στο συγκεκριμενο bucket
+  // Έλενχος για ύπαρξη block για το συγκεκριμενο bucket
+  if (block_num != 0) {   
     do {
       bl_counter++;   // μετρητής των block που ελεγθηκαν και ζητείται να επιστραφεί
       BF_Block_Init(&block);

@@ -44,7 +44,7 @@ int HP_CreateFile(char *fileName) {
   return 0;
 }
 
-HP_info* HP_OpenFile(char *fileName){
+HP_info* HP_OpenFile(char *fileName) {
   int fileDesc;
   BF_Block* block;
   HP_info* info = malloc(sizeof(HP_info));
@@ -71,12 +71,12 @@ int HP_CloseFile(HP_info* hp_info){
 }
 
 
-int HP_InsertEntry(HP_info* hp_info, Record record){
+int HP_InsertEntry(HP_info* hp_info, Record record) {
   BF_Block *block, *last_block;
   HP_block_info bl_info;
   HP_block_info *bl_info_ptr;
   void *data;
-  int flag = 0;   // flag για μη εγγραφή
+  int flag = 0;   // flag για εγγραφή ή μη
 
   // Φέρνω στην ενδιάμεση μνήμη το 1ο block
   BF_Block_Init(&block);
@@ -129,28 +129,23 @@ int HP_InsertEntry(HP_info* hp_info, Record record){
   return hp_info->last_block_id;
 }
 
-int HP_GetAllEntries(HP_info* hp_info, int value){
+int HP_GetAllEntries(HP_info* hp_info, int value) {
   int blocks = 0, flag = 0;
   int i = 1;   // Απο 1 διοτι δεν θα ελένξει το 1ο block με το βασικό struct
   BF_Block *block;
 
   BF_Block_Init(&block);
   CALL_BF(BF_GetBlockCounter(hp_info->fileDesc, &blocks));
-  //ΜΕΤΑ ΤΟ ΜΠΛΟΚ 101 ΣΚΑΕΙ , ΓΕΜΙΖΕΙ Ο BUFFER
   for (i = 1; i < blocks; i++) {
-    // printf("\n--->%d\n", i);
     CALL_BF(BF_GetBlock(hp_info->fileDesc, i, block));
     // Δείκτης στα δεδομένα του block και στο HP_block_info
     void* data = BF_Block_GetData(block);
     Record* rec = data;
     HP_block_info *bl_info_ptr = data + hp_info->records * sizeof(Record);
-    // printf("--HERE_1\n");
     // Ευρεση εγγραφών στο συγκεκριμενο block
     int temp = bl_info_ptr->block_records;
-    // printf("--HERE_2\n");
-    // ΔΙΑΒΑΖΕΙ ΠΑΡΑΠΑΝΩ ΑΠΟ 6 ΕΓΓΡΑΦΕΣ ΠΟΥ ΧΩΡΑΕΙ ΤΟ BLOCK ΧΩΡΙΣ ΝΑ ΣΚΑΕΙ
+    // Εύρεση και εκτύπωση ζητούμενης εγγραφής
     for (int y = 0 ; y < temp ; y++) {
-      // printf("%d\n", y);
       if (rec[y].id == value) {
         printRecord(rec[y]);
         flag = 1;
