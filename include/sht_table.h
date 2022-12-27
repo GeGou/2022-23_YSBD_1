@@ -21,10 +21,10 @@ typedef struct {
 } SHT_block_info;
 
 // δομή ζευγων που αποθηκεύονται στο δευτερεύον ευρετήριο
-typedef struct pair {
+typedef struct {
     char name[15];      // ονομα εγγραφής
     int block_id;       // αριθμός block που περιέχει την εγγραφή
-};
+} Pair;
 
 /*Η συνάρτηση SHT_CreateSecondaryIndex χρησιμοποιείται για τη δημιουργία
 και κατάλληλη αρχικοποίηση ενός αρχείου δευτερεύοντος κατακερματισμού με

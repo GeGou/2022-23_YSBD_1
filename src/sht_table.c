@@ -17,13 +17,16 @@
   }
 
 
-
-int SHT_CreateSecondaryIndex(char *sfileName,  int buckets, char* fileName){
+int SHT_CreateSecondaryIndex(char *sfileName,  int buckets, char* fileName) {
   SHT_info sht_info;
   BF_Block* block;
   void* data;
 
-  CALL_OR_DIE(BF_CreateFile(fileName));
+  // δημιουργία ενός αρχείο πρωτεύοντος κατακερματισμού
+
+
+  // δημιουργία ενός αρχείου δευτερεύοντος κατακερματισμού
+  CALL_OR_DIE(BF_CreateFile(sfileName));
   CALL_OR_DIE(BF_OpenFile(sfileName, &sht_info.sfileDesc));
   // Αρχικοποιώ/δεσμευσω block στην μνήμη
   BF_Block_Init(&block);
@@ -39,10 +42,11 @@ int SHT_CreateSecondaryIndex(char *sfileName,  int buckets, char* fileName){
   for (int i = 0 ; i < buckets ; i++) {
     sht_info.sht_array[i] = 0;   // Αρχικά για κανεναν κουβα δεν εχει δημιουργηθεί block
   }
-  // Βρισκω το πλήθος των εγγραφων που χωρανε σε καθε block του αρχείου
-  sht_info.pairs = (BF_BLOCK_SIZE - sizeof(HT_block_info)) / sizeof(Record);
-  // Αποθήκευση struct ht_info στο 1ο block 
-  memcpy(data, &sht_info, sizeof(HT_info));
+  // Βρισκω το πλήθος των ζευγών που χωράνε σε καθε block του αρχείου
+  sht_info.pairs = (BF_BLOCK_SIZE - sizeof(SHT_block_info)) / sizeof(Pair);
+  printf("%d\n", sht_info.pairs);
+  // Αποθήκευση struct SHT_info στο 1ο block 
+  memcpy(data, &sht_info, sizeof(SHT_info));
   // Dirty και Unpin για να αποθηκευτεί στον δίσκο
   BF_Block_SetDirty(block);
   CALL_OR_DIE(BF_UnpinBlock(block));
@@ -52,7 +56,7 @@ int SHT_CreateSecondaryIndex(char *sfileName,  int buckets, char* fileName){
   return 0;
 }
 
-SHT_info* SHT_OpenSecondaryIndex(char *indexName){
+SHT_info* SHT_OpenSecondaryIndex(char *indexName) {
   int sfileDesc;
   BF_Block* block;
   SHT_info* info = malloc(sizeof(SHT_info));
@@ -60,10 +64,10 @@ SHT_info* SHT_OpenSecondaryIndex(char *indexName){
   // Βρίσκω και επιστρέφω το περιεχόμενο του 1ου block (block 0)
   BF_Block_Init(&block);
   CALL_OR_DIE(BF_OpenFile(indexName, &sfileDesc));
-  CALL_OR_DIE(BF_GetBlock(sfileDesc, 0, block));
+  CALL_OR_DIE(BF_GetBlock(sfileDesc, 0, block));    // ΙΣΩΣ ΝΑ ΜΗΝ ΘΕΛΕΙ 0
   char* data = BF_Block_GetData(block); 
   memcpy(data, &sfileDesc, sizeof(int));
-  memcpy(info, data, sizeof(HT_info));
+  memcpy(info, data, sizeof(SHT_info));
   if (info->is_sht == 0) {
     return NULL;
   }
@@ -73,15 +77,18 @@ SHT_info* SHT_OpenSecondaryIndex(char *indexName){
 }
 
 
-int SHT_CloseSecondaryIndex( SHT_info* SHT_info ){
+int SHT_CloseSecondaryIndex( SHT_info* SHT_info ) {
+  CALL_OR_DIE(BF_CloseFile(SHT_info->sfileDesc));
+  free(SHT_info->sht_array);
+  free(SHT_info);
+  return 0;
+}
+
+int SHT_SecondaryInsertEntry(SHT_info* sht_info, Record record, int block_id) {
 
 }
 
-int SHT_SecondaryInsertEntry(SHT_info* sht_info, Record record, int block_id){
-
-}
-
-int SHT_SecondaryGetAllEntries(HT_info* ht_info, SHT_info* sht_info, char* name){
+int SHT_SecondaryGetAllEntries(HT_info* ht_info, SHT_info* sht_info, char* name) {
 
 }
 
