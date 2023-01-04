@@ -10,6 +10,7 @@ make bf;
 Αντίστοιχα και για τα άλλα εκτελέσιμα.
 make ht;
 make hp;
+make sht;
 
 Έλενχος για leaks
 valgrind -s --leak-check=full --show-leak-kinds=all --trace-children=yes --track-origins=yes ./build/hp_main

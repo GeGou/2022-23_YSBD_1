@@ -45,6 +45,10 @@ int main() {
     printf("RUN PrintAllEntries for name %s\n",searchName);
     SHT_SecondaryGetAllEntries(info,index_info,searchName);
 
+    // Η συνάρτηση διαβάζει το αρχείο με όνομα sfilename και τυπώνει διάφορα στατιστικά
+    // σχετικα με την υλοποιηση του Secondary index
+    SecondaryIndexStatistics(INDEX_NAME);
+
     // Κλείνουμε το αρχείο κατακερματισμού και το δευτερεύον ευρετήριο
     SHT_CloseSecondaryIndex(index_info);
     HT_CloseFile(info);

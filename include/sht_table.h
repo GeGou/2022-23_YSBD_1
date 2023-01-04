@@ -10,7 +10,7 @@ typedef struct {
     int snumBuckets;  // το πλήθος των “κάδων” του αρχείου ευρετηρίου
     BF_Block *sblock;    //block στο οποίο είναι αποθηκευμένη η δομή
     int *sht_array;   //ο πίνακας κατακερματισμού με βάση το name (hash(name))
-    int pairs;    // Αριθμός εγγραφών που χωράνε σε κάθε block του αρχείου κατακερματισμού
+    int pairs;    // Αριθμός εγγραφών που χωράνε σε κάθε block του αρχείου κατακερματισμού (στην περιπτωση μας αυτο ειναι 25)
     int is_sht;     // 1 αν ειναι αρχείο δευτερεύοντος ευρετηρίου και 0 αν δεν είναι
 } SHT_info;
 
@@ -77,5 +77,7 @@ int SHT_SecondaryGetAllEntries(
     SHT_info* header_info, /* επικεφαλίδα του αρχείου δευτερεύοντος ευρετηρίου*/
     char* name /* το όνομα στο οποίο γίνεται αναζήτηση */);
 
+int SecondaryIndexStatistics(
+    char* sfilename/* όνομα του αρχείου που ενδιαφέρει */  );
 
 #endif // SHT_FILE_H
