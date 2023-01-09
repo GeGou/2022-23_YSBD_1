@@ -6,7 +6,7 @@
 #include "ht_table.h"
 #include "sht_table.h"
 
-#define RECORDS_NUM 200 // you can change it if you want
+#define RECORDS_NUM 245 // you can change it if you want
 #define FILE_NAME "data.db"
 #define INDEX_NAME "index.db"
 
@@ -45,10 +45,10 @@ int main() {
     printf("RUN PrintAllEntries for name %s\n",searchName);
     SHT_SecondaryGetAllEntries(info,index_info,searchName);
 
-    // Η συνάρτηση διαβάζει το αρχείο με όνομα sfilename και τυπώνει διάφορα στατιστικά
-    // σχετικα με την υλοποιηση του Secondary index
+    // Εμφανίζει τα στατιστικά σχετικα με τα ευρετήρια (πρωτεύον και δευτερεύον)
+    HashStatistics(FILE_NAME);
     SecondaryIndexStatistics(INDEX_NAME);
-
+      
     // Κλείνουμε το αρχείο κατακερματισμού και το δευτερεύον ευρετήριο
     SHT_CloseSecondaryIndex(index_info);
     HT_CloseFile(info);

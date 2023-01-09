@@ -98,15 +98,6 @@ int SHT_SecondaryInsertEntry(SHT_info* sht_info, Record record, int block_id) {
   bucket = bucket % sht_info->snumBuckets;  //το bucket στο οποίο θα πάει το ζεύγος (record.name,block.id)
   int block_num = sht_info->sht_array[bucket];
 
-  // -> δευτερη hash function για δοκιμη <-
-  // for (int i = 0 ; pair.name[i] != '\0' ; i++) {
-  //   bucket = 37 * bucket + pair.name[i];
-  // }
-  // bucket = bucket % sht_info->snumBuckets;  //το bucket στο οποίο θα πάει το ζεύγος (record.name,block.id)
-  // if(bucket < 0) {
-  //   bucket += sht_info->snumBuckets;
-  // }
-
   // Ελενχος για το αν εχει υπαρχει allocated block για τον κουβα, αν δεν υπάρχει το δημιουργώ
   if (block_num == 0) {
     BF_Block *new_block;
@@ -248,6 +239,8 @@ int SecondaryIndexStatistics(char* sfilename) {
   SHT_block_info *bl_info_ptr;
   SHT_info *sht_info;
 
+  printf("\nStatistics for Secondary Index.\n");
+
   // Παίρνω δείκτη στα δεδομένα του 1ο block (block 0)
   BF_Block_Init(&block);
   CALL_OR_DIE(BF_OpenFile(sfilename, &sfileDesc));
@@ -258,7 +251,7 @@ int SecondaryIndexStatistics(char* sfilename) {
   int max_file_blocks;
   CALL_OR_DIE(BF_GetBlockCounter(sht_info->sfileDesc, &max_file_blocks));
   printf("File blocks : %d\n", max_file_blocks);
-  int overflowed_buckets = 0, min_pairs = 0, max_pairs = 0, file_pair_sum = 0, flag = 0;
+  int overflowed_buckets = 0, min_pairs = 0, max_pairs = 0, flag = 0;
   float avg_pairs = 0;
   for (int i = 0 ; i < sht_info->snumBuckets ; i++) {
     // Βρισκω για κάθε bucket ποιο ειναι το 1ο block που αρχιζει να βαζει εγγραφές 
@@ -303,8 +296,7 @@ int SecondaryIndexStatistics(char* sfilename) {
       }
       if (pairs_sum > max_pairs) {
         max_pairs = pairs_sum;
-      }
-      file_pair_sum += pairs_sum;    
+      }    
     }
     // 4o ζητούμενο
     if (bl_per_bucket == 0) {
@@ -316,8 +308,8 @@ int SecondaryIndexStatistics(char* sfilename) {
   }
 
   // 2o ζητούμενο
-  avg_pairs = (float)file_pair_sum / (float)sht_info->snumBuckets;
-  printf("Min records: %d  -> Avg records: %f -> Max records: %d\n", min_pairs, avg_pairs, max_pairs);
+  avg_pairs = ((float)min_pairs+(float)max_pairs) / 2;
+  printf("Min pairs: %d  -> Avg pairs: %f -> Max pairs: %d\n", min_pairs, avg_pairs, max_pairs);
   // 3o ζητούμενο , δεν υπολογίζουμε το block 0
   int avg_bucket_blocks = (max_file_blocks - 1)/sht_info->snumBuckets;
   printf("Average block per bucket: %d\n", avg_bucket_blocks);

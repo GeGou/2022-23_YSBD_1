@@ -211,6 +211,8 @@ int HashStatistics(char* filename) {
   HT_block_info *bl_info_ptr;
   HT_info *ht_info;
 
+  printf("\nStatistics for Primary Index.\n");
+
   // Παίρνω δείκτη στα δεδομένα του 1ο block (block 0)
   BF_Block_Init(&block);
   CALL_OR_DIE(BF_OpenFile(filename, &fileDesc));
@@ -222,7 +224,7 @@ int HashStatistics(char* filename) {
   CALL_OR_DIE(BF_GetBlockCounter(ht_info->fileDesc, &max_file_blocks));
   printf("File blocks : %d\n", max_file_blocks);
   
-  int overflowed_buckets = 0, min_rec = 0, max_rec = 0, file_rec_sum = 0, flag = 0;
+  int overflowed_buckets = 0, min_rec = 0, max_rec = 0, flag = 0;
   float avg_rec = 0;
   for (int i = 0 ; i < ht_info->numBuckets ; i++) {
     // Βρισκω για κάθε bucket ποιο ειναι το 1ο block που αρχιζει να βαζει εγγραφές 
@@ -268,14 +270,18 @@ int HashStatistics(char* filename) {
       if (rec_sum > max_rec) {
         max_rec = rec_sum;
       }
-      file_rec_sum += rec_sum;    
     }
     // 4o ζητούμενο
-    printf("Bucket: %d has %d overflow blocks.\n", i, bl_per_bucket - 1);
+    if (bl_per_bucket == 0) {
+      printf("Bucket: %d No blocks created for this bucket.\n", i);
+    }
+    else {
+      printf("Bucket: %d has %d overflow blocks.\n", i, bl_per_bucket - 1);
+    }
   }
 
   // 2o ζητούμενο
-  avg_rec = (float)file_rec_sum / (float)ht_info->numBuckets;
+  avg_rec = ((float)min_rec+(float)max_rec) / 2;
   printf("Min records: %d  -> Avg records: %f -> Max records: %d\n", min_rec, avg_rec, max_rec);
   // 3o ζητούμενο , δεν υπολογίζουμε το block 0
   int avg_bucket_blocks = (max_file_blocks - 1)/ ht_info->numBuckets;

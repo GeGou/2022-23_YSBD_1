@@ -5,7 +5,7 @@
 #include "bf.h"
 #include "ht_table.h"
 
-#define RECORDS_NUM 65 // you can change it if you want
+#define RECORDS_NUM 230 // you can change it if you want
 #define FILE_NAME "data.db"
 
 #define CALL_OR_DIE(call)     \
@@ -37,6 +37,7 @@ int main() {
   printf("\nSearching for: %d",id);
   HT_GetAllEntries(info, id);
 
+  // Εμφανίζει τα στατιστικά της υλοποίησης heap
   HashStatistics(FILE_NAME);
 
   HT_CloseFile(info);
